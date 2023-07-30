@@ -1,14 +1,26 @@
-import {useState} from 'react'
+import {useState, useEffect} from 'react'
 import Person from './components/Person'
 import SearchField from './components/SearchField'
 import PersonList from './components/PersonList'
+import PersonService from './service/persons'
 
 
-const App = (props) => {
-  const [persons, setPersons] = useState(props.persons)
+
+const App = () => {
+  const [persons, setPersons] = useState([])
   const [newName, setNewName] = useState('')
   const [newPhone, setNewPhone] = useState('')
   const [searchField, setSearchField] = useState('')
+  
+  useEffect(() => {
+    console.log('effect hook!')
+    PersonService
+      .getAll()
+      .then(response => {
+        setPersons(response.data)
+      })
+
+  }, [])
 
   const handleSearchFieldChange = (event) => {
       console.log(event.target.value)
@@ -16,22 +28,38 @@ const App = (props) => {
     }
 
   const addName = (event) => {
-    console.log(event.target.value)
     setNewName(event.target.value)
   }
+
   const addPhone = (event) => {
-    console.log(event.target.value)
     setNewPhone(event.target.value)
   }
+
+
   const addNewPersonToList = (event) => {
     event.preventDefault()
-    const isPresent = persons.some(person => person.name.toLowerCase() === newName.toLowerCase())
-    if(isPresent){
-      alert(`${newName} is already present`)
+    const person = persons.filter(p => p.name.toLowerCase() === newName.toLowerCase())[0]
+    if(person && person.id){
+      console.log('Updating existing user with id ', person.id)
+      const newPerson = {name : person.name, number: newPhone,  id : person.id}
+      PersonService
+        .update(person.id, newPerson)
+        .then( response => {
+          console.log('Updated the record')
+          const otherPersons = persons.filter(p => p.id !== person.id)
+          setPersons(otherPersons.concat(newPerson))
+        }
+        )
     }
     else{
-      const newPerson = {name : newName, phone: newPhone,  id : persons.length+1}
-      setPersons(persons.concat(newPerson))
+      const newPerson = {name : newName, number: newPhone,  id : persons.length+1}
+      PersonService
+        .create(newPerson)
+        .then(
+          response => {
+            setPersons(persons.concat(response.data))
+          }
+        )
     }
     
     setNewName('')
@@ -70,7 +98,7 @@ const App = (props) => {
       
       
       <h1>Numbers </h1>
-      <PersonList persons={filteredPersons}></PersonList>
+      <PersonList persons={filteredPersons} setPersons={setPersons}></PersonList>
     </div>
   )
 }
