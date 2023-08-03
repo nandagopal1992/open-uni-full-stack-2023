@@ -3,6 +3,7 @@ import Person from './components/Person'
 import SearchField from './components/SearchField'
 import PersonList from './components/PersonList'
 import PersonService from './service/persons'
+import Notification from './components/Notification'
 
 
 
@@ -11,6 +12,7 @@ const App = () => {
   const [newName, setNewName] = useState('')
   const [newPhone, setNewPhone] = useState('')
   const [searchField, setSearchField] = useState('')
+  const [message, setNewMessage] = useState('')
   
   useEffect(() => {
     console.log('effect hook!')
@@ -48,8 +50,13 @@ const App = () => {
           console.log('Updated the record')
           const otherPersons = persons.filter(p => p.id !== person.id)
           setPersons(otherPersons.concat(newPerson))
+          setNewMessage(`${newPerson.name} modified`)
+          setTimeout(() => {
+            setNewMessage(null)
+          }, 5000)
         }
         )
+      
     }
     else{
       const newPerson = {name : newName, number: newPhone,  id : persons.length+1}
@@ -58,6 +65,11 @@ const App = () => {
         .then(
           response => {
             setPersons(persons.concat(response.data))
+            setNewMessage(`${newPerson.name} added`)
+            console.log(message)
+            setTimeout(() => {
+              setNewMessage(null)
+            }, 5000)
           }
         )
     }
@@ -73,7 +85,7 @@ const App = () => {
     <div>
       <h1> Phonebook </h1>
       <SearchField handleSearchFieldChange={handleSearchFieldChange}/>
-
+      <Notification message={message} />
     <div>
       <h3> Add new people to phone book</h3>
       <form onSubmit={addNewPersonToList}>
